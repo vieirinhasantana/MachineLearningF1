@@ -1,0 +1,64 @@
+options:
+  docker: true
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - pip
+        script:
+          - echo "Running on branch ${BITBUCKET_BRANCH}"
+  branches:
+    '{feature/**,hotfix/**,bugfix/**}':
+      - step:
+          name: Lint
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install flake8
+            - flake8 --max-line-length=120
+      - step:
+          name: Complexity
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install radon
+            - bash pipeline/radon.sh b
+      - step:
+          name: Test
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install -r requirements.txt
+            - coverage run -m unittest
+            - coverage report --fail-under=80
+    '{develop,master}':
+      - step:
+          name: Lint
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install flake8
+            - flake8 --max-line-length=120
+      - step:
+          name: Complexity
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install radon
+            - bash pipeline/radon.sh b
+      - step:
+          name: Test
+          image: python:3.8.0-slim
+          script:
+            - python -V
+            - pip install -r requirements.txt
+            - coverage run -m unittest
+            - coverage report --fail-under=80
+      - step:
+          name: Build
+          script:
+            - TAG_NAME=`if [ $BITBUCKET_BRANCH == "master" ]; then echo "latest"; elif [ $BITBUCKET_BRANCH == "staging" ]; then echo "staging"; else echo "develop"; fi`
+            - docker build -t registry.gitlab.com/$PROJECT/$BITBUCKET_REPO_SLUG:$TAG_NAME .
+            - docker login -u $REGISTRY_LOGIN -p $REGISTRY_PASS registry.gitlab.com
+            - docker push registry.gitlab.com/$PROJECT/$BITBUCKET_REPO_SLUG:$TAG_NAME

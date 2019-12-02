@@ -1,0 +1,7 @@
+bs4
+logzero
+setuptools
+unittest-xml-reporting
+xmlrunner
+requests
+requests_cache

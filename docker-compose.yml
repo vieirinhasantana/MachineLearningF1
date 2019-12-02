@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  bot-collector-news:
+    image: registry.gitlab.com/artificial-intelligence/bot-collector-news
+    environment:
+      MONGO_COLLECTION: provider-ibama-embargos
+      MONGO_URL: 34.213.238.152
+      MONGO_DATABASE: data-engine
+      MONGO_USERNAME: peoplestaging
+      MONGO_PASSWORD: C3dr0M0b1l3
+      MONGO_AUTH_SOURCE: admin
+
+    ports:
+      - target: 5000
+        published: 8080
+        protocol: tcp
+        mode: host

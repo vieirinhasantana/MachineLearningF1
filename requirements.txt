@@ -5,3 +5,4 @@ unittest-xml-reporting
 xmlrunner
 requests
 requests_cache
+pymongo

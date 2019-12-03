@@ -12,7 +12,11 @@ from app.main.utils.singleton import Singleton
 class MongoDB(object):
 
     def __init__(self):
+        self._host = settings.MONGO_URL
         self._databse = settings.MONGO_DATABASE
+        self._username = settings.MONGO_USERNAME
+        self._password = settings.MONGO_PASSWORD
+
         self.conn = self.get_instance
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -20,7 +24,14 @@ class MongoDB(object):
 
     @property
     def connection_database(self):
-        return MongoClient("mongodb+srv://cedrotech_ai:tEnrrKgE@cluster0-h1dgk.gcp.mongodb.net/machine-learning?retryWrites=true&w=majority")
+        return MongoClient(
+            host=self._host,
+            username=self._username,
+            password=self._password,
+            authSource=self._databse,
+            authMechanism="SCRAM-SHA-1",
+            retryWrites=False
+        )
 
     @property
     def get_instance(self):
@@ -32,10 +43,10 @@ class MongoDB(object):
         x = self.conn[self._databse].command('ping')
         return x.get('ok', '')
 
-    def save_one(self, obj, collection) -> str:
+    def save_or_update(self, query, obj, collection):
         db = self.conn[self._databse]
-        x = db[collection].insert_one(obj)
-        return x.inserted_id
+        x = db[collection].replace_one(query, obj, upsert=True)
+        print(x.upserted_id)
 
     def save_list(self, obj_list, collection) -> list:
         db = self.conn[self._databse]
